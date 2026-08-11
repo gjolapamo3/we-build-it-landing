@@ -8,11 +8,12 @@ Create a local `.env` file from `.env.example` and set:
 
 ```bash
 VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+# Legacy projects may still use VITE_SUPABASE_ANON_KEY instead.
 SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Render for production.
+Set `VITE_SUPABASE_URL` and either `VITE_SUPABASE_PUBLISHABLE_KEY` or `VITE_SUPABASE_ANON_KEY` in Render for production.
 Keep `SUPABASE_SERVICE_ROLE_KEY` out of the frontend runtime. It is only for local/admin sync scripts or a trusted CI job.
 
 ## Supabase setup
