@@ -9,7 +9,7 @@ import {
   Shield,
   Waypoints,
 } from 'lucide-react'
-import { supabase } from './lib/supabase'
+import { isSupabaseConfigured, supabase, supabaseConfigError } from './lib/supabase'
 
 const fallbackContent = {
   banner: 'We Build-IT LLC · Cybersecurity & Platform Engineering Consulting',
@@ -133,45 +133,55 @@ function App() {
     let isMounted = true
 
     async function loadContent() {
-      const [contentResult, capabilitiesResult, engagementsResult] = await Promise.all([
-        supabase
-          .from('site_content')
-          .select('key, value'),
-        supabase
-          .from('service_capabilities')
-          .select('name, description')
-          .order('display_order', { ascending: true }),
-        supabase
-          .from('engagement_models')
-          .select('name, price, cadence, highlights')
-          .order('display_order', { ascending: true }),
-      ])
-
-      if (!isMounted) {
+      if (!isSupabaseConfigured || !supabase) {
+        console.warn(supabaseConfigError)
+        setIsLoadingContent(false)
         return
       }
 
-      if (!contentResult.error && Array.isArray(contentResult.data) && contentResult.data.length > 0) {
-        setPageContent((current) => ({
-          ...current,
-          ...normalizeContentRows(contentResult.data),
-        }))
-      }
+      try {
+        const [contentResult, capabilitiesResult, engagementsResult] = await Promise.all([
+          supabase
+            .from('site_content')
+            .select('key, value'),
+          supabase
+            .from('service_capabilities')
+            .select('name, description')
+            .order('display_order', { ascending: true }),
+          supabase
+            .from('engagement_models')
+            .select('name, price, cadence, highlights')
+            .order('display_order', { ascending: true }),
+        ])
 
-      if (
-        !capabilitiesResult.error &&
-        Array.isArray(capabilitiesResult.data) &&
-        capabilitiesResult.data.length > 0
-      ) {
-        setCapabilities(normalizeCapabilities(capabilitiesResult.data))
-      }
+        if (!isMounted) {
+          return
+        }
 
-      if (
-        !engagementsResult.error &&
-        Array.isArray(engagementsResult.data) &&
-        engagementsResult.data.length > 0
-      ) {
-        setEngagementModels(normalizeEngagements(engagementsResult.data))
+        if (!contentResult.error && Array.isArray(contentResult.data) && contentResult.data.length > 0) {
+          setPageContent((current) => ({
+            ...current,
+            ...normalizeContentRows(contentResult.data),
+          }))
+        }
+
+        if (
+          !capabilitiesResult.error &&
+          Array.isArray(capabilitiesResult.data) &&
+          capabilitiesResult.data.length > 0
+        ) {
+          setCapabilities(normalizeCapabilities(capabilitiesResult.data))
+        }
+
+        if (
+          !engagementsResult.error &&
+          Array.isArray(engagementsResult.data) &&
+          engagementsResult.data.length > 0
+        ) {
+          setEngagementModels(normalizeEngagements(engagementsResult.data))
+        }
+      } catch (error) {
+        console.error('Error loading Supabase content:', error)
       }
 
       setIsLoadingContent(false)
@@ -187,6 +197,11 @@ function App() {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
+    if (!isSupabaseConfigured || !supabase) {
+      alert('Supabase is not configured. Set VITE_SUPABASE_URL and a public Supabase key, then reload.')
+      return
+    }
+
     const rawFormData = new FormData(event.currentTarget)
     const formData = {
       name: String(rawFormData.get('name') ?? '').trim(),
@@ -195,21 +210,26 @@ function App() {
       message: String(rawFormData.get('message') ?? '').trim(),
     }
 
-    const { error } = await supabase.from('inquiries').insert([
-      {
-        full_name: formData.name,
-        work_email: formData.email,
-        company_name: formData.company,
-        message: formData.message,
-      },
-    ])
+    try {
+      const { error } = await supabase.from('inquiries').insert([
+        {
+          full_name: formData.name,
+          work_email: formData.email,
+          company_name: formData.company,
+          message: formData.message,
+        },
+      ])
 
-    if (error) {
-      console.error('Submission error:', error.message)
-      alert('There was an issue submitting your request. Please try again.')
-    } else {
-      setSubmitted(true)
-      formRef.current?.reset()
+      if (error) {
+        console.error('Submission error:', error.message)
+        alert('There was an issue submitting your request. Please try again.')
+      } else {
+        setSubmitted(true)
+        formRef.current?.reset()
+      }
+    } catch (error) {
+      console.error('Submission exception:', error)
+      alert('Supabase client is not ready. Check your environment variables and reload.')
     }
   }
 
