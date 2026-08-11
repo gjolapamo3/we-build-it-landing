@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ArrowRight,
   BadgeCheck,
@@ -9,8 +9,38 @@ import {
   Shield,
   Waypoints,
 } from 'lucide-react'
+import { supabase } from './lib/supabase'
 
-const capabilities = [
+const fallbackContent = {
+  banner: 'We Build-IT LLC · Cybersecurity & Platform Engineering Consulting',
+  badge: 'Secure systems. Streamlined delivery. Measurable resilience.',
+  heroTitle:
+    'Technical security assessments that strengthen your platform, controls, and engineering velocity.',
+  heroDescription:
+    'We Build-IT LLC helps teams modernize security operations, map compliance to real engineering practices, and build reliable internal platforms that scale with the business.',
+  deliveryLabel: 'Delivery focus',
+  deliveryTitle: 'Assessment-led security and platform improvements',
+  outcomesLabel: 'Primary outcomes',
+  outcomesText: 'Lower risk, faster release confidence',
+  engagementStyleLabel: 'Engagement style',
+  engagementStyleText: 'Fractional advisory and embedded execution',
+  capabilitiesEyebrow: 'Core capabilities',
+  capabilitiesTitle:
+    'Built for teams that need security depth and platform momentum.',
+  engagementsEyebrow: 'Flexible engagement models',
+  engagementsTitle:
+    'Choose the operating model that fits your team and timeline.',
+  contactEyebrow: 'Technical security assessments',
+  contactTitle:
+    'Book time with a consultant and scope your next initiative.',
+  contactDescription:
+    'Share your environment, compliance drivers, or platform goals and we will recommend the right starting engagement.',
+  discoverySessionText:
+    '30-minute discovery sessions for security assessments',
+  contactEmail: 'hello@webuild-itllc.com',
+}
+
+const fallbackCapabilities = [
   {
     name: 'SIEM / SOC',
     description:
@@ -31,7 +61,7 @@ const capabilities = [
   },
 ]
 
-const engagementModels = [
+const fallbackEngagementModels = [
   {
     name: 'Assessment Sprint',
     price: '$4,500',
@@ -64,29 +94,127 @@ const engagementModels = [
   },
 ]
 
+function normalizeContentRows(rows) {
+  return rows.reduce((content, row) => {
+    if (row.key && typeof row.value === 'string') {
+      content[row.key] = row.value
+    }
+
+    return content
+  }, {})
+}
+
+function normalizeCapabilities(rows) {
+  return rows.map((row) => ({
+    name: row.name,
+    description: row.description,
+    icon: fallbackCapabilities.find((item) => item.name === row.name)?.icon ?? Shield,
+  }))
+}
+
+function normalizeEngagements(rows) {
+  return rows.map((row) => ({
+    name: row.name,
+    price: row.price,
+    cadence: row.cadence,
+    highlights: Array.isArray(row.highlights) ? row.highlights : [],
+  }))
+}
+
 function App() {
   const formRef = useRef(null)
-  const [submissionLink, setSubmissionLink] = useState('')
+  const [pageContent, setPageContent] = useState(fallbackContent)
+  const [capabilities, setCapabilities] = useState(fallbackCapabilities)
+  const [engagementModels, setEngagementModels] = useState(fallbackEngagementModels)
+  const [isLoadingContent, setIsLoadingContent] = useState(true)
+  const [submitted, setSubmitted] = useState(false)
 
-  function handleSubmit(event) {
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadContent() {
+      const [contentResult, capabilitiesResult, engagementsResult] = await Promise.all([
+        supabase
+          .from('site_content')
+          .select('key, value'),
+        supabase
+          .from('service_capabilities')
+          .select('name, description')
+          .order('display_order', { ascending: true }),
+        supabase
+          .from('engagement_models')
+          .select('name, price, cadence, highlights')
+          .order('display_order', { ascending: true }),
+      ])
+
+      if (!isMounted) {
+        return
+      }
+
+      if (!contentResult.error && Array.isArray(contentResult.data) && contentResult.data.length > 0) {
+        setPageContent((current) => ({
+          ...current,
+          ...normalizeContentRows(contentResult.data),
+        }))
+      }
+
+      if (
+        !capabilitiesResult.error &&
+        Array.isArray(capabilitiesResult.data) &&
+        capabilitiesResult.data.length > 0
+      ) {
+        setCapabilities(normalizeCapabilities(capabilitiesResult.data))
+      }
+
+      if (
+        !engagementsResult.error &&
+        Array.isArray(engagementsResult.data) &&
+        engagementsResult.data.length > 0
+      ) {
+        setEngagementModels(normalizeEngagements(engagementsResult.data))
+      }
+
+      setIsLoadingContent(false)
+    }
+
+    loadContent()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const name = formData.get('name')
-    const email = formData.get('email')
-    const company = formData.get('company')
-    const details = formData.get('details')
-    const subject = encodeURIComponent(
-      `Security assessment request from ${company}`,
-    )
-    const body = encodeURIComponent(
-      `Name: ${name}\nEmail: ${email}\nCompany: ${company}\n\nRequest details:\n${details}`,
-    )
 
-    setSubmissionLink(`mailto:hello@webuild-itllc.com?subject=${subject}&body=${body}`)
+    const rawFormData = new FormData(event.currentTarget)
+    const formData = {
+      name: String(rawFormData.get('name') ?? '').trim(),
+      email: String(rawFormData.get('email') ?? '').trim(),
+      company: String(rawFormData.get('company') ?? '').trim(),
+      message: String(rawFormData.get('message') ?? '').trim(),
+    }
+
+    const { error } = await supabase.from('inquiries').insert([
+      {
+        full_name: formData.name,
+        work_email: formData.email,
+        company_name: formData.company,
+        message: formData.message,
+      },
+    ])
+
+    if (error) {
+      console.error('Submission error:', error.message)
+      alert('There was an issue submitting your request. Please try again.')
+    } else {
+      setSubmitted(true)
+      formRef.current?.reset()
+    }
   }
 
   function handleReset() {
-    setSubmissionLink('')
+    setSubmitted(false)
     formRef.current?.reset()
   }
 
@@ -94,25 +222,22 @@ function App() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex max-w-7xl flex-col gap-16 px-6 py-10 sm:px-8 lg:px-10">
         <div className="rounded-full border border-cyan-500/20 bg-slate-900/80 px-4 py-2 text-sm font-medium text-cyan-200 shadow-lg shadow-cyan-950/30 backdrop-blur">
-          We Build-IT LLC · Cybersecurity & Platform Engineering Consulting
+          {pageContent.banner}
         </div>
 
         <div className="grid gap-10 lg:grid-cols-[1.3fr_0.9fr] lg:items-center">
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/70 px-4 py-2 text-sm text-slate-300">
               <Waypoints className="h-4 w-4 text-cyan-300" />
-              Secure systems. Streamlined delivery. Measurable resilience.
+              {pageContent.badge}
             </div>
 
             <div className="space-y-5">
               <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                Technical security assessments that strengthen your platform,
-                controls, and engineering velocity.
+                {pageContent.heroTitle}
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-slate-300">
-                We Build-IT LLC helps teams modernize security operations, map
-                compliance to real engineering practices, and build reliable
-                internal platforms that scale with the business.
+                {pageContent.heroDescription}
               </p>
             </div>
 
@@ -137,22 +262,22 @@ function App() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 sm:col-span-2">
                 <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">
-                  Delivery focus
+                  {pageContent.deliveryLabel}
                 </p>
                 <p className="mt-3 text-2xl font-semibold text-white">
-                  Assessment-led security and platform improvements
+                  {pageContent.deliveryTitle}
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
-                <p className="text-sm text-slate-400">Primary outcomes</p>
+                <p className="text-sm text-slate-400">{pageContent.outcomesLabel}</p>
                 <p className="mt-2 text-xl font-semibold text-white">
-                  Lower risk, faster release confidence
+                  {pageContent.outcomesText}
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
-                <p className="text-sm text-slate-400">Engagement style</p>
+                <p className="text-sm text-slate-400">{pageContent.engagementStyleLabel}</p>
                 <p className="mt-2 text-xl font-semibold text-white">
-                  Fractional advisory and embedded execution
+                  {pageContent.engagementStyleText}
                 </p>
               </div>
             </div>
@@ -162,13 +287,13 @@ function App() {
         <section className="grid gap-6" aria-labelledby="capabilities-heading">
           <div className="space-y-2">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
-              Core capabilities
+              {pageContent.capabilitiesEyebrow}
             </p>
             <h2
               id="capabilities-heading"
               className="text-3xl font-semibold text-white"
             >
-              Built for teams that need security depth and platform momentum.
+              {pageContent.capabilitiesTitle}
             </h2>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
@@ -194,13 +319,13 @@ function App() {
         >
           <div className="space-y-2">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
-              Flexible engagement models
+              {pageContent.engagementsEyebrow}
             </p>
             <h2
               id="engagements-heading"
               className="text-3xl font-semibold text-white"
             >
-              Choose the operating model that fits your team and timeline.
+              {pageContent.engagementsTitle}
             </h2>
           </div>
           <div className="grid gap-6 lg:grid-cols-3">
@@ -237,23 +362,22 @@ function App() {
         >
           <div className="space-y-5">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
-              Technical security assessments
+              {pageContent.contactEyebrow}
             </p>
             <h2 className="text-3xl font-semibold text-white">
-              Book time with a consultant and scope your next initiative.
+              {pageContent.contactTitle}
             </h2>
             <p className="leading-7 text-slate-300">
-              Share your environment, compliance drivers, or platform goals and
-              we will recommend the right starting engagement.
+              {pageContent.contactDescription}
             </p>
             <div className="space-y-3 text-sm text-slate-300">
               <div className="flex items-center gap-3">
                 <CalendarRange className="h-5 w-5 text-cyan-300" />
-                30-minute discovery sessions for security assessments
+                {pageContent.discoverySessionText}
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-cyan-300" />
-                hello@webuild-itllc.com
+                {pageContent.contactEmail}
               </div>
             </div>
           </div>
@@ -298,7 +422,7 @@ function App() {
                 What do you need help with?
               </span>
               <textarea
-                name="details"
+                name="message"
                 rows="5"
                 required
                 placeholder="Tell us about your security operations, compliance objectives, or platform engineering priorities."
@@ -307,31 +431,23 @@ function App() {
             </label>
             <button
               type="submit"
-              disabled={Boolean(submissionLink)}
+              disabled={submitted || isLoadingContent}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              {submissionLink ? 'Request prepared' : 'Request assessment'}
+              {submitted ? 'Request submitted' : 'Request assessment'}
               <ArrowRight className="h-4 w-4" />
             </button>
-            {submissionLink ? (
+            {submitted ? (
               <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-4 text-sm text-emerald-200">
                 <p>
-                  Thanks — your request details are ready. Use the email link
-                  below to send them to We Build-IT LLC.
+                  Thanks. Your assessment inquiry was submitted successfully.
                 </p>
-                <a
-                  href={submissionLink}
-                  className="mt-3 inline-flex items-center gap-2 font-semibold text-emerald-100 underline underline-offset-4"
-                >
-                  Open drafted assessment email
-                  <Mail className="h-4 w-4" />
-                </a>
                 <button
                   type="button"
                   onClick={handleReset}
                   className="mt-3 block font-semibold text-emerald-100 underline underline-offset-4"
                 >
-                  Start over
+                  Send another request
                 </button>
               </div>
             ) : null}
