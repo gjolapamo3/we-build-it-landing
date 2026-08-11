@@ -10,6 +10,17 @@ CREATE TABLE IF NOT EXISTS public.inquiries (
     status TEXT DEFAULT 'new'
 );
 
+-- Backfill schema safety for already-existing tables created without defaults.
+ALTER TABLE public.inquiries
+    ALTER COLUMN created_at SET DEFAULT timezone('utc'::text, now());
+
+UPDATE public.inquiries
+SET created_at = timezone('utc'::text, now())
+WHERE created_at IS NULL;
+
+ALTER TABLE public.inquiries
+    ALTER COLUMN created_at SET NOT NULL;
+
 ALTER TABLE public.inquiries ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow public insert to inquiries" ON public.inquiries;

@@ -121,6 +121,24 @@ function normalizeEngagements(rows) {
   }))
 }
 
+function formatSupabaseError(error) {
+  if (!error || typeof error !== 'object') {
+    return 'Unknown error'
+  }
+
+  const details = [
+    error.message,
+    error.details,
+    error.hint,
+    error.code ? `code=${error.code}` : '',
+    error.status ? `status=${error.status}` : '',
+  ]
+    .filter(Boolean)
+    .join(' | ')
+
+  return details || 'Unknown error'
+}
+
 function App() {
   const formRef = useRef(null)
   const [pageContent, setPageContent] = useState(fallbackContent)
@@ -221,8 +239,9 @@ function App() {
       ])
 
       if (error) {
-        console.error('Submission error:', error.message)
-        alert('There was an issue submitting your request. Please try again.')
+        const errorSummary = formatSupabaseError(error)
+        console.error('Submission error payload:', error)
+        alert(`Submission failed: ${errorSummary}`)
       } else {
         setSubmitted(true)
         formRef.current?.reset()
