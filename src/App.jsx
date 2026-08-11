@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   ArrowRight,
   BadgeCheck,
@@ -65,6 +65,7 @@ const engagementModels = [
 ]
 
 function App() {
+  const formRef = useRef(null)
   const [submissionLink, setSubmissionLink] = useState('')
 
   function handleSubmit(event) {
@@ -80,12 +81,18 @@ function App() {
     const body = encodeURIComponent(
       `Name: ${name}\nEmail: ${email}\nCompany: ${company}\n\nRequest details:\n${details}`,
     )
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())
 
-    const nextSubmissionLink = `mailto:hello@webuild-itllc.com?subject=${subject}&body=${body}`
+    if (!isEmailValid) {
+      return
+    }
 
-    setSubmissionLink(
-      nextSubmissionLink.startsWith('mailto:') ? nextSubmissionLink : '',
-    )
+    setSubmissionLink(`mailto:hello@webuild-itllc.com?subject=${subject}&body=${body}`)
+  }
+
+  function handleReset() {
+    setSubmissionLink('')
+    formRef.current?.reset()
   }
 
   return (
@@ -256,7 +263,7 @@ function App() {
             </div>
           </div>
 
-          <form className="grid gap-4" onSubmit={handleSubmit}>
+          <form ref={formRef} className="grid gap-4" onSubmit={handleSubmit}>
             <label className="grid gap-2">
               <span className="text-sm font-medium text-slate-200">
                 Full name
@@ -324,6 +331,13 @@ function App() {
                   Open drafted assessment email
                   <Mail className="h-4 w-4" />
                 </a>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="mt-3 block font-semibold text-emerald-100 underline underline-offset-4"
+                >
+                  Start over
+                </button>
               </div>
             ) : null}
           </form>
