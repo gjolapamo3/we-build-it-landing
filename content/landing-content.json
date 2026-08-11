@@ -1,0 +1,75 @@
+{
+  "siteContent": {
+    "banner": "We Build-IT LLC · Cybersecurity & Platform Engineering Consulting",
+    "badge": "Secure systems. Streamlined delivery. Measurable resilience.",
+    "heroTitle": "Technical security assessments that strengthen your platform, controls, and engineering velocity.",
+    "heroDescription": "We Build-IT LLC helps teams modernize security operations, map compliance to real engineering practices, and build reliable internal platforms that scale with the business.",
+    "deliveryLabel": "Delivery focus",
+    "deliveryTitle": "Assessment-led security and platform improvements",
+    "outcomesLabel": "Primary outcomes",
+    "outcomesText": "Lower risk, faster release confidence",
+    "engagementStyleLabel": "Engagement style",
+    "engagementStyleText": "Fractional advisory and embedded execution",
+    "capabilitiesEyebrow": "Core capabilities",
+    "capabilitiesTitle": "Built for teams that need security depth and platform momentum.",
+    "engagementsEyebrow": "Flexible engagement models",
+    "engagementsTitle": "Choose the operating model that fits your team and timeline.",
+    "contactEyebrow": "Technical security assessments",
+    "contactTitle": "Book time with a consultant and scope your next initiative.",
+    "contactDescription": "Share your environment, compliance drivers, or platform goals and we will recommend the right starting engagement.",
+    "discoverySessionText": "30-minute discovery sessions for security assessments",
+    "contactEmail": "hello@webuild-itllc.com"
+  },
+  "serviceCapabilities": [
+    {
+      "displayOrder": 1,
+      "name": "SIEM / SOC",
+      "description": "Detection engineering, telemetry design, alert tuning, and incident-ready monitoring for cloud and hybrid estates."
+    },
+    {
+      "displayOrder": 2,
+      "name": "GRC Compliance",
+      "description": "Control mapping, audit readiness, policy development, and evidence workflows aligned to real operational risk."
+    },
+    {
+      "displayOrder": 3,
+      "name": "Platform Engineering",
+      "description": "Secure developer platforms, hardened CI/CD, IaC guardrails, and paved-road automation for reliable delivery."
+    }
+  ],
+  "engagementModels": [
+    {
+      "displayOrder": 1,
+      "name": "Assessment Sprint",
+      "price": "$4,500",
+      "cadence": "Fixed scope · 2 weeks",
+      "highlights": [
+        "Architecture and control review",
+        "Priority-ranked findings",
+        "Leadership readout with next steps"
+      ]
+    },
+    {
+      "displayOrder": 2,
+      "name": "Fractional Security Partner",
+      "price": "$8,500",
+      "cadence": "Monthly advisory retainer",
+      "highlights": [
+        "Virtual security leadership",
+        "Roadmap tracking and governance support",
+        "Recurring stakeholder and engineering sessions"
+      ]
+    },
+    {
+      "displayOrder": 3,
+      "name": "Platform Delivery Pod",
+      "price": "$12,000",
+      "cadence": "Monthly engineering engagement",
+      "highlights": [
+        "Secure platform backlog execution",
+        "Automation and reliability improvements",
+        "Embedded enablement for internal teams"
+      ]
+    }
+  ]
+}
