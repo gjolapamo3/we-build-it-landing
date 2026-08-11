@@ -81,11 +81,6 @@ function App() {
     const body = encodeURIComponent(
       `Name: ${name}\nEmail: ${email}\nCompany: ${company}\n\nRequest details:\n${details}`,
     )
-    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())
-
-    if (!isEmailValid) {
-      return
-    }
 
     setSubmissionLink(`mailto:hello@webuild-itllc.com?subject=${subject}&body=${body}`)
   }
