@@ -3,6 +3,7 @@ import {
   ArrowRight,
   BadgeCheck,
   CalendarRange,
+  CheckCircle2,
   CloudCog,
   Mail,
   Shield,
@@ -64,11 +65,27 @@ const engagementModels = [
 ]
 
 function App() {
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [submissionLink, setSubmissionLink] = useState('')
 
   function handleSubmit(event) {
     event.preventDefault()
-    setIsSubmitted(true)
+    const formData = new FormData(event.currentTarget)
+    const name = formData.get('name')
+    const email = formData.get('email')
+    const company = formData.get('company')
+    const details = formData.get('details')
+    const subject = encodeURIComponent(
+      `Security assessment request from ${company}`,
+    )
+    const body = encodeURIComponent(
+      `Name: ${name}\nEmail: ${email}\nCompany: ${company}\n\nRequest details:\n${details}`,
+    )
+
+    const nextSubmissionLink = `mailto:hello@webuild-itllc.com?subject=${subject}&body=${body}`
+
+    setSubmissionLink(
+      nextSubmissionLink.startsWith('mailto:') ? nextSubmissionLink : '',
+    )
   }
 
   return (
@@ -202,7 +219,7 @@ function App() {
                 <ul className="mt-6 space-y-3 text-slate-300">
                   {highlights.map((highlight) => (
                     <li key={highlight} className="flex gap-3">
-                      <Shield className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
                       <span>{highlight}</span>
                     </li>
                   ))}
@@ -288,16 +305,26 @@ function App() {
             </label>
             <button
               type="submit"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-slate-200"
+              disabled={Boolean(submissionLink)}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              Request assessment
+              {submissionLink ? 'Request prepared' : 'Request assessment'}
               <ArrowRight className="h-4 w-4" />
             </button>
-            {isSubmitted ? (
-              <p className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-                Thanks — your assessment request is ready to be reviewed by We
-                Build-IT LLC.
-              </p>
+            {submissionLink ? (
+              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-4 text-sm text-emerald-200">
+                <p>
+                  Thanks — your request details are ready. Use the email link
+                  below to send them to We Build-IT LLC.
+                </p>
+                <a
+                  href={submissionLink}
+                  className="mt-3 inline-flex items-center gap-2 font-semibold text-emerald-100 underline underline-offset-4"
+                >
+                  Open drafted assessment email
+                  <Mail className="h-4 w-4" />
+                </a>
+              </div>
             ) : null}
           </form>
         </section>
