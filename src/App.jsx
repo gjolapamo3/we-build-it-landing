@@ -396,6 +396,42 @@ function App() {
         </section>
 
         <section
+          id="faq"
+          className="grid gap-6"
+          aria-labelledby="faq-heading"
+        >
+          <div className="space-y-2">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
+              Common questions
+            </p>
+            <h2 id="faq-heading" className="text-3xl font-semibold text-white">
+              Frequently Asked Questions
+            </h2>
+          </div>
+          <div className="grid gap-4">
+            <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+              <h3 className="text-xl font-semibold text-white">
+                What services does We Build-IT LLC provide?
+              </h3>
+              <p className="mt-3 leading-7 text-slate-300">
+                We specialize in backend software engineering, custom Python/FastAPI
+                microservices, API integrations, and application security (AppSec)
+                vulnerability audits.
+              </p>
+            </article>
+            <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+              <h3 className="text-xl font-semibold text-white">
+                Where is We Build-IT LLC located?
+              </h3>
+              <p className="mt-3 leading-7 text-slate-300">
+                We are based in Houston, Texas, providing remote and on-site
+                engineering and security solutions across the United States.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section
           id="contact"
           className="grid gap-8 rounded-[2rem] border border-slate-800 bg-slate-900/80 p-6 lg:grid-cols-[0.9fr_1.1fr] lg:p-8"
         >
